@@ -1,0 +1,146 @@
+import React, { useContext, useState, useEffect, useRef } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { CartContext } from "../context/CartContext";
+import { useAuth } from "../context/AuthContext";
+
+const Header = () => {
+  const { cartItems } = useContext(CartContext);
+  const { userInfo, logout } = useAuth();
+  const navigate = useNavigate();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  const itemCount = cartItems.reduce((count, item) => count + item.qty, 0);
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/auth");
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [dropdownRef]);
+
+  return (
+    <header className="bg-white shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center py-4">
+          <Link to="/" className="text-2xl font-bold text-gray-900">
+            Ecom. Store
+          </Link>
+          <nav className="flex items-center space-x-6">
+            <Link
+              to="/"
+              className="text-gray-600 hover:text-gray-500 transition-colors"
+            >
+              Home
+            </Link>
+            {userInfo && (
+              <div className="">
+                <Link to="/cart" className="group -m-2 flex items-center p-2 text-gray-600 hover:text-gray-500">
+                  My Bucket
+                  {itemCount > 0 && (
+                    <span className="ml-2 text-sm font-medium text-white bg-gray-600 rounded-full px-2 py-0.5">
+                      {itemCount}
+                    </span>
+                  )}
+                  <span className="sr-only">items in cart, view bag</span>
+                </Link>
+              </div>
+            )}
+
+            {userInfo ? (
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  className="flex items-center text-gray-600 hover:text-gray-500 transition-colors"
+                >
+                  <svg
+                    className="h-6 w-6 mr-1 text-gray-500"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="1.5"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                  </svg>
+                  <span className="hidden sm:block mr-2">{userInfo.name}</span>
+                  <svg
+                    className="h-5 w-5"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </button>
+                {dropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
+                    <Link
+                      to="/myorders"
+                      onClick={() => setDropdownOpen(false)}
+                      className={`block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 ${
+                        location.pathname === "/myorders" ? "bg-gray-100" : ""
+                      }`}
+                    >
+                      My Orders
+                    </Link>
+                    <button
+                      onClick={() => {
+                        handleLogout();
+                        setDropdownOpen(false);
+                      }}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link
+                to="/auth"
+                className={`flex items-center text-gray-600 hover:text-gray-500 transition-colors ${
+                  location.pathname === "/auth" ? "text-gray-500" : ""
+                }`}
+              >
+                <svg
+                  className="h-6 w-6 mr-1 text-gray-500"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth="1.5"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
+                Login
+              </Link>
+            )}
+          </nav>
+        </div>
+      </div>
+    </header>
+  );
+};
+
+export default Header;
