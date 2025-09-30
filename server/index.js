@@ -14,6 +14,11 @@ app.use(cors({
   credentials: true,
 }));
 app.use(cookieParser());
+
+// Handle Stripe webhook first, before body parsing
+app.use('/api/orders/webhook', orderRoutes);
+
+// Parse JSON for all other routes
 app.use(express.json());
 
 connectDB();

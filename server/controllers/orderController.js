@@ -73,13 +73,22 @@ const stripeWebhook = async (req, res) => {
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  if (event.type === 'checkout.session.completed') {
-    const session = event.data.object;
+  try {
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object;
 
-    const orderId = session.metadata.orderId;
-    const order = await Order.findById(orderId);
+      const orderId = session.metadata.orderId;
+      if (!orderId) {
+        console.error('No orderId found in session metadata');
+        return res.status(400).json({ error: 'No orderId in metadata' });
+      }
 
-    if (order) {
+      const order = await Order.findById(orderId);
+      if (!order) {
+        console.error(`Order not found with id: ${orderId}`);
+        return res.status(404).json({ error: 'Order not found' });
+      }
+
       order.isPaid = true;
       order.paidAt = Date.now();
       order.paymentResult = {
@@ -88,11 +97,16 @@ const stripeWebhook = async (req, res) => {
         update_time: new Date().toISOString(),
         email_address: session.customer_details.email,
       };
-      await order.save();
-    }
-  }
 
-  res.status(200).json({ received: true });
+      const updatedOrder = await order.save();
+      console.log(`Order ${orderId} marked as paid successfully`);
+    }
+
+    res.status(200).json({ received: true });
+  } catch (error) {
+    console.error('Error processing webhook:', error);
+    res.status(500).json({ error: 'Failed to process webhook' });
+  }
 };
 
 // @desc    Get order by Stripe session ID

@@ -13,8 +13,12 @@ const Header = () => {
   const itemCount = cartItems.reduce((count, item) => count + item.qty, 0);
 
   const handleLogout = async () => {
-    await logout();
-    navigate("/auth");
+    try {
+      await logout();
+      // Navigation is now handled in the AuthContext
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
   };
 
   useEffect(() => {

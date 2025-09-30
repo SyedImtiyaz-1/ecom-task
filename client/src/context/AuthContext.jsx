@@ -2,7 +2,7 @@ import React, { createContext, useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
-const API_URL = `${import.meta.env.VITE_API_URL}/users`;
+const API_URL = `${import.meta.env.VITE_API_URL}/api/users`;
 
 export const AuthContext = createContext();
 
@@ -64,9 +64,21 @@ export function AuthProvider({ children }) {
   };
 
   const logout = async () => {
-    await axios.post(`${API_URL}/logout`, {}, { withCredentials: true });
-    setUserInfo(null);
-    toast.success('You have been logged out.');
+    try {
+      await axios.post(`${API_URL}/logout`, {}, { withCredentials: true });
+      setUserInfo(null);
+      // Clear all local storage data
+      localStorage.clear();
+      toast.success('You have been logged out.');
+      // Use a small delay to ensure state is cleared before redirect
+      setTimeout(() => {
+        window.location.href = '/auth';
+      }, 100);
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error('Error during logout. Please try again.');
+      throw error; // Propagate error to component
+    }
   };
 
   const value = { userInfo, loading, error, login, register, logout, clearError: () => setError(null) };
